@@ -1,0 +1,42 @@
+###########################
+# Eclipse generated files #
+###########################
+.metadata/
+.project
+.classpath
+.settings
+.checkstyle
+.externalToolBuilders
+bin/
+classes/
+
+#########################
+# Maven generated files #
+#########################
+target/
+lib/
+classes/
+
+######################
+# OS generated files #
+######################
+.DS_Store
+ehthumbs.db
+Icon?
+Thumbs.db
+
+##########################
+# soapUI generated files #
+##########################
+soapui*.log
+global-groovy.log
+
+###########################
+# Other unnecessary files #
+###########################
+.swp
+.svn
+.checksum.txt
+.ignore-checksum.txt
+
+*.csv
