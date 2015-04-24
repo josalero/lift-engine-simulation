@@ -1,6 +1,6 @@
 package com.liftsimulation.controller;
 
-import java.util.Queue;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
@@ -19,7 +19,7 @@ public class ControlPanelController implements InitializingBean{
 	@Autowired
 	private CommandFormatValidator commandFormatValidator;
 	
-	private Queue<String> commandQueue;
+	private List<String> commandQueue;
 	
 	@Autowired
 	ApplicationContext ctx;
@@ -31,12 +31,11 @@ public class ControlPanelController implements InitializingBean{
 	public void handleRequest(String command){
 
 		//1. Validate the request
-		boolean isValidRequest = validateRequest(command);
-		
-		//2. Add  
-		if (isValidRequest){
+		if (validateRequest(command)){
 			log.info("Adding command to queue : " + command);
 			commandQueue.add(command);
+		}else{
+			log.info("Command is not recognized: " + command);
 		}
 	}
 	
@@ -66,6 +65,6 @@ public class ControlPanelController implements InitializingBean{
 	@SuppressWarnings("unchecked")
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.commandQueue =   (Queue<String>)ctx.getBean("commandQueue");
+		this.commandQueue =   (List<String>)ctx.getBean("commandQueue");
 	}
 }

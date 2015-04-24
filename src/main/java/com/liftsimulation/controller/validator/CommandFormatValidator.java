@@ -15,10 +15,10 @@ import com.liftsimulation.exception.ValidationException;
 @Component
 public class CommandFormatValidator implements Validator<String> {
 
-	private static final String COMMAND_OUT = "OUT";
-	private static final String COMMAND_OUT_UP = "UP";
-	private static final String COMMAND_OUT_DOWN = "DOWN";
-	private static final String COMMAND_IN = "IN";
+	public static final String COMMAND_OUT = "OUT";
+	public static final String COMMAND_OUT_UP = "UP";
+	public static final String COMMAND_OUT_DOWN = "DOWN";
+	public static final String COMMAND_IN = "IN";
 
 	private static final String COMMAND_NOT_VALID_GENERIC_MESSAGE = "This command %s is not valid";
 

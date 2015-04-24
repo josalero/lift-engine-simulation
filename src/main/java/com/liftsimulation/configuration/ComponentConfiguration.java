@@ -3,8 +3,10 @@
  */
 package com.liftsimulation.configuration;
 
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +23,13 @@ import org.springframework.core.annotation.Order;
 public class ComponentConfiguration {
 	
 	@Bean(name="commandQueue")
-	public Queue<String> commandQueue(){
-		return new LinkedBlockingQueue<String>();
+	public List<String> commandQueue(){
+		return new CopyOnWriteArrayList<String>();
 	}
+	
+	@Bean(name="liftMap")
+	public Map<Integer, String> liftMap(){
+		return new ConcurrentHashMap<Integer, String>();
+	}
+	
 }
