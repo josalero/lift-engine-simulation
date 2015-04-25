@@ -67,7 +67,7 @@ public class LiftEngineSimulation {
 			log.info("Enter command ");
 		    String command = sc.nextLine();
 		    if (!StringUtils.equalsIgnoreCase(command, "EXIT")){
-		    	controller.handleRequest(command);
+		    	controller.handleRequest(command.toUpperCase());
 		    }else{
 		    	shouldContinue = false;
 		    }

@@ -53,7 +53,7 @@ public class ControlPanelController implements InitializingBean{
 	public void handleRequest(String command){
 
 		//1. Validate the request
-		String cleanCommand = cleanRequest(command);
+		String cleanCommand = cleanRequest(command.toUpperCase());
 		
 		boolean validFloor = validateFloor(cleanCommand);
 		if (!validFloor){

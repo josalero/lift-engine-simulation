@@ -73,7 +73,7 @@ public class CommandFormatValidator implements Validator<String> {
 	 */
 	private boolean validateOutCommand(String direction, String floor) {
 		boolean isValid = false;
-		switch (direction) {
+		switch (direction.toUpperCase()) {
 		case COMMAND_OUT_UP:
 			isValid = true;
 			break;
