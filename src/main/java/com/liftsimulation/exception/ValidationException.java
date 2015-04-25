@@ -2,6 +2,8 @@ package com.liftsimulation.exception;
 
 /**
  * 
+ * Exception for Validators
+ * 
  * @author Jose Aleman
  *
  */

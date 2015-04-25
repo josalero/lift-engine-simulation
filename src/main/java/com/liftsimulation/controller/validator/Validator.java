@@ -14,8 +14,13 @@ import com.liftsimulation.exception.ValidationException;
  * @author Jose Aleman
  *
  */
-public interface Validator<T> {
 
+public interface Validator<T> {
+	public static final String COMMAND_OUT = "OUT";
+	public static final String COMMAND_OUT_UP = "UP";
+	public static final String COMMAND_OUT_DOWN = "DOWN";
+	public static final String COMMAND_IN = "IN";
+	
 	public boolean validate (T command) throws ValidationException;
 	
 }

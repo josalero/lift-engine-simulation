@@ -4,8 +4,6 @@
 package com.liftsimulation.configuration;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.context.annotation.Bean;
@@ -25,11 +23,6 @@ public class ComponentConfiguration {
 	@Bean(name="commandQueue")
 	public List<String> commandQueue(){
 		return new CopyOnWriteArrayList<String>();
-	}
-	
-	@Bean(name="liftMap")
-	public Map<Integer, String> liftMap(){
-		return new ConcurrentHashMap<Integer, String>();
 	}
 	
 }

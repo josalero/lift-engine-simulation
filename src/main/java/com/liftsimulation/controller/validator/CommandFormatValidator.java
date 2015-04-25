@@ -12,13 +12,8 @@ import com.liftsimulation.exception.ValidationException;
  * @author Jose Aleman
  * 
  */
-@Component
+@Component(value="commandFormatValidator")
 public class CommandFormatValidator implements Validator<String> {
-
-	public static final String COMMAND_OUT = "OUT";
-	public static final String COMMAND_OUT_UP = "UP";
-	public static final String COMMAND_OUT_DOWN = "DOWN";
-	public static final String COMMAND_IN = "IN";
 
 	private static final String COMMAND_NOT_VALID_GENERIC_MESSAGE = "This command %s is not valid";
 
@@ -35,7 +30,6 @@ public class CommandFormatValidator implements Validator<String> {
 		if (StringUtils.isBlank(command)) {
 			isValid = false;
 		} else {
-
 			// Check if string contains exactly 3 values
 			String commandTokens[] = StringUtils.split(command, ',');
 			if (commandTokens.length == 3) {
@@ -54,6 +48,8 @@ public class CommandFormatValidator implements Validator<String> {
 					throw new ValidationException(
 							generateValidationErrorMessage(command));
 				}
+			}else{
+				isValid = false;
 			}
 		}
 
@@ -83,7 +79,7 @@ public class CommandFormatValidator implements Validator<String> {
 			break;
 
 		case COMMAND_OUT_DOWN:
-			isValid = false;
+			isValid = true;
 			break;
 
 		default:

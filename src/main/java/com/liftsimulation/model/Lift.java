@@ -14,7 +14,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.liftsimulation.controller.ControlPanelController;
-import com.liftsimulation.controller.validator.CommandFormatValidator;
+import com.liftsimulation.controller.validator.Validator;
+import com.liftsimulation.listener.LiftListener;
 
 /**
  * 
@@ -33,23 +34,24 @@ public class Lift implements InitializingBean {
 	private Integer id;
 	private Map<Integer, List<String>> floorMap;
 	private List<String> controlPanelQueue;
-	private boolean goingUp = true;
 	private Integer floors;
 	private Integer onFloorNumber = 1;
-	private Map<Integer, String> liftMap;
 
 	@Autowired
 	private ApplicationContext ctx;
+	
+	@Autowired
+	private LiftListener liftListener;
 
 	public Lift() {
 		this.floorMap = new TreeMap<Integer, List<String>>();
+		
 	}
 
 	public Lift(Integer id, Integer floors) {
 		this();
 		this.floors = floors;
 		this.id = id;
-
 	}
 
 	/**
@@ -58,19 +60,18 @@ public class Lift implements InitializingBean {
 	 */
 	public void addRequest(String command) {
 
-		String tokens[] = command.split(",");
-
+		String tokens[] = command.split("[,]");
 		Integer floor = Integer.parseInt(tokens[2]); // floor
 
 		if (floor > 0) {
-			List<String> commandList = floorMap.get(floor - 1);
+			List<String> commandList = floorMap.get(floor);
 			
 			if (commandList == null){
-				commandList = new ArrayList<>();
+				commandList = new ArrayList<String>();
 			}
 			
 			commandList.add(command);
-			floorMap.put(floor - 1, commandList);
+			floorMap.put(floor, commandList);
 		}
 
 	}
@@ -81,101 +82,28 @@ public class Lift implements InitializingBean {
 	public void work() {
 
 		// reviews the queue is new requests are for him
-		collectCommandsForMe();
+		liftListener.collectCommandByLift(id);
 
-		if (this.floorMap.size() > 0) {
-			// evaluates if needs to go up or down
-			goingUp = needsToGoUp();
-			// executes the direction according to "goingUp"
-			if (goingUp) {
-				goingUp();
-			} else {
-				goingDown();
-			}
-		}
+		boolean proceed = hasRequests();
+			
+		if (proceed) {
+			switch (calculateDirection()) {
+				case 1:
+					goingUp();
+					break;
 
-	}
-
-	/**
-	 * 
-	 * @return true if lift needs to go up else false
-	 */
-	private boolean needsToGoUp() {
-
-		boolean goesUp = true;
-
-		if (this.onFloorNumber > floors) {
-			goesUp = false;
-		} else if (this.onFloorNumber < 1) {
-			goesUp = true;
-		}
-
-		return goesUp;
-	}
-
-	/**
-	 * 
-	 */
-	private void collectCommandsForMe() {
-
-		// Evaluates if queue is not empty to proceed
-		if (controlPanelQueue.size() > 0) {
-			synchronized (controlPanelQueue) {
-
-				List<String> outCommands = new ArrayList<>();
-
-				for (String command : controlPanelQueue) {
-					String tokens[] = command.split(",");
-					if (StringUtils.equals(tokens[0],
-							CommandFormatValidator.COMMAND_IN)
-							&& StringUtils.equals(tokens[1],
-									String.valueOf(this.id))) {
-						addRequest(command);
-						controlPanelQueue.remove(command);
-					}
-
-					if (StringUtils.equals(tokens[0],
-							CommandFormatValidator.COMMAND_OUT)) {
-						outCommands.add(command);
-
-					}
-				}// /End For
-
-				if (this.floorMap.size() == 0) {
+				case -1:
+					goingDown();
+					break;
 					
-					for (String outCommand : outCommands) {
-						String outCommandTokens[] = outCommand.split(",");
-						Integer outFloor = Integer.valueOf(outCommandTokens[2]);
-						
-						for (Integer id : liftMap.keySet()) {
-							if (id != this.id) {
-								String liftStatus = liftMap.get(id);
-								String tokens[] = liftStatus.split(",");//false,1
-								
-								boolean liftGoingUp = Boolean.valueOf(tokens[0]);
-								Integer liftOnFloor = Integer.valueOf(tokens[1]);
-								
-								if ((StringUtils.equals(outCommandTokens[1],
-										CommandFormatValidator.COMMAND_OUT_UP) && 
-										liftGoingUp && outFloor > liftOnFloor)) {
-								
-
-								} else {
-
-								}
-							}
-
-						}
-					}
-
-					// addRequest();
-					controlPanelQueue.remove(outCommands.get(0));
-				}
-
+				default:
+					trackOnFloor(onFloorNumber);
+					break;
 			}
 		}
-
 	}
+
+
 
 	/**
 	 * 
@@ -189,69 +117,116 @@ public class Lift implements InitializingBean {
 		}
 
 	}
+	
+	/**
+	 * 
+	 */
+	private void goingUp() {
+
+		if (this.onFloorNumber < floors) {
+			this.onFloorNumber++;
+			trackOnFloor(this.onFloorNumber);
+		}
+	}
+	
+	/**
+	 * 
+	 * @return 1 to go up, 0 to stay and -1 to go down
+	 */
+	public Integer calculateDirection(){
+		Integer status = null;
+		Integer onFloor = 1;//Lobby
+
+		if (this.floorMap.size() > 0 ){
+			// It is supposed to be sorted by Floor
+			onFloor = (Integer)this.floorMap.keySet().toArray()[0]; 
+		}
+		
+		if (onFloor > onFloorNumber){
+			status = 1;
+		}else if (onFloor < onFloorNumber){
+			status = -1;
+		} else{
+			status = 0;
+		}
+		
+		return status;
+	}
 	/**
 	 * 
 	 * @param floor
 	 */
 	private void trackOnFloor(Integer floor) {
 
-		this.liftMap.put(id, generateStatus());
-
-		List<String> commandList = this.floorMap.get(onFloorNumber - 1);
+		List<String> commandList = this.floorMap.get(floor);
 		
 		if (commandList != null && commandList.size() > 0){
 			for (String command : commandList){
-				if (StringUtils.contains(command,
-						CommandFormatValidator.COMMAND_IN)) {
-					trackServedRequest(onFloorNumber, command);
+				if (floor == onFloorNumber){
+					trackOpenDoorRequest(floor, command);
+				}else if (StringUtils.contains(command,
+						Validator.COMMAND_IN)) {
+					trackServedRequest(floor, command);
 				} else if (StringUtils.contains(command,
-						CommandFormatValidator.COMMAND_OUT)) {
-					trackServedRequest(onFloorNumber, command);
+						Validator.COMMAND_OUT)) {
+					trackServedRequest(floor, command);
 				}
 			}
+			this.floorMap.remove(floor);
 		}else{
-			trackFloor(onFloorNumber);
+			trackFloor(floor);
 		}
 
 	}
 
 	/**
 	 * 
+	 * @param floor
 	 */
-	private void goingUp() {
-
-		if (this.onFloorNumber <= floors) {
-			this.onFloorNumber++;
-			trackOnFloor(this.onFloorNumber);
-		}
-	}
-
 	private void trackFloor(int floor) {
 		log.info(String.format("Lift %s crossed floor %s ", id, floor));
 		pause(5000);
 	}
 
+	/**
+	 * 
+	 * @param floor
+	 * @param command
+	 */
 	private void trackServedRequest(int floor, String command) {
-		this.floorMap.remove(floor);
+
 		log.info(String.format(
 				"Lift %s stopped on floor %s to serve request (%s)", id, floor,
 				command));
 		pause(10000);
 	}
+	
+	/**
+	 * 
+	 * @param floor
+	 * @param command
+	 */
+	private void trackOpenDoorRequest(int floor, String command) {
 
+		log.info(String.format(
+				"Lift %s opened the door on floor %s to serve request (%s)", id, floor,
+				command));
+		pause(10000);
+	}
+	
+	/**
+	 * 
+	 * @param seconds
+	 */
 	private void pause(int seconds) {
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(seconds);
 		} catch (InterruptedException e) {
 			// nothing
 		}
 	}
 
 	/******* SETTERS AND GETTERS ***********/
-
-	public boolean isGoingUp() {
-		return goingUp;
-	}
 
 	public Integer getFloors() {
 		return floors;
@@ -264,7 +239,6 @@ public class Lift implements InitializingBean {
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		controlPanelQueue = (List<String>) ctx.getBean("commandQueue");
-		liftMap = (Map<Integer, String>) ctx.getBean("liftMap");
 	}
 
 	public List<String> getControlPanelQueue() {
@@ -274,12 +248,13 @@ public class Lift implements InitializingBean {
 	public void setId(Integer id) {
 		if (this.id == null) {
 			this.id = id;
-			liftMap.put(id, generateStatus());
+			Integer floor = this.onFloorNumber == null ? 1 : this.onFloorNumber;
+			log.info(String.format("Lift %s is in the floor %d and is ready to start working", id, floor));
 		}
 	}
 
-	private String generateStatus() {
-		return String.valueOf(goingUp) + "," + this.onFloorNumber;
+	public Integer getId() {
+		return id;
 	}
 
 	public void setFloors(Integer floors) {
@@ -288,12 +263,30 @@ public class Lift implements InitializingBean {
 		}
 	}
 
-	public Map<Integer, String> getFloorMap() {
-		return floorMap;
+	public boolean hasRequests(){
+		return this.floorMap != null && this.floorMap.size() > 0;
 	}
 
-	public void setFloorMap(Map<Integer, String> floorMap) {
-		this.floorMap = floorMap;
+	public void setFloorMap(Map<Integer, List <String>> floorMap) {
+		if (floorMap != null){
+			this.floorMap = floorMap;
+		}
 	}
 
+	public void setLiftListener(LiftListener liftListener) {
+		if (liftListener != null){
+			this.liftListener = liftListener;
+		}
+		
+	}
+	
+	public void setControlPanelQueue(List<String> controlPanelQueue) {
+		if (controlPanelQueue != null){
+			this.controlPanelQueue = controlPanelQueue;
+		}
+	}
+	
+	public void setOnFloorNumber(Integer onFloorNumber) {
+		this.onFloorNumber = onFloorNumber == null || onFloorNumber < 1 ? 1 : onFloorNumber;
+	}
 }

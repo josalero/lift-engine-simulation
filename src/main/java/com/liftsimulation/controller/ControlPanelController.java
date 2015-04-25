@@ -5,21 +5,34 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Controller;
 
 import com.liftsimulation.controller.validator.CommandFormatValidator;
+import com.liftsimulation.controller.validator.Validator;
 import com.liftsimulation.exception.ValidationException;
 
+/**
+ * Control Panel that adds requests to a queue.
+ * 
+ * 
+ * @author Jose Aleman
+ *
+ */
 @Controller
+@Qualifier("controlPanelController")
 public class ControlPanelController implements InitializingBean{
 
 	private final static Logger log = Logger.getLogger(ControlPanelController.class);
 	
 	@Autowired
-	private CommandFormatValidator commandFormatValidator;
+	@Qualifier("commandFormatValidator")
+	private Validator<String> commandFormatValidator;
 	
 	private List<String> commandQueue;
+	
+	private Integer floors;
 	
 	@Autowired
 	ApplicationContext ctx;
@@ -28,21 +41,29 @@ public class ControlPanelController implements InitializingBean{
 		
 	}
 
+	/**
+	 * Handles the request sent by the user
+	 * 
+	 * @param command
+	 */
 	public void handleRequest(String command){
 
 		//1. Validate the request
-		if (validateRequest(command)){
+		String cleanCommand = cleanRequest(command);
+		
+		boolean validFloor = validateFloor(cleanCommand);
+		if (!validFloor){
+			log.error("Floor is not valid");
+		}else if (validateRequest(cleanCommand) ){
 			log.info("Adding command to queue : " + command);
 			commandQueue.add(command);
-		}else{
-			log.info("Command is not recognized: " + command);
 		}
 	}
 	
 	/**
 	 * 
 	 * @param command
-	 * @return
+	 * @return true if is a valid request
 	 */
 	private boolean validateRequest(String command){
 		boolean isValid = false;
@@ -50,14 +71,47 @@ public class ControlPanelController implements InitializingBean{
 			isValid = commandFormatValidator.validate(command);
 		}
 		catch(ValidationException e){
-			log.error("Command String is not valid ", e);
+			log.error(e.getLocalizedMessage());
 		}
 		
 		return isValid;		
 	}
 	
-
-	public void setCommandFormatValidator(CommandFormatValidator commandFormatValidator) {
+	/**
+	 * 
+	 * @param command
+	 * @return true is floor is in the correct range
+	 */
+	private boolean validateFloor(String command){
+		Integer floor = Integer.parseInt(command.split("[,]")[2]);
+		if (floor < 1 || floor > floors){
+			return false;
+		}
+		return true;
+	}
+	/**
+	 * 
+	 * @param command
+	 * @return a clean command
+	 */
+	private String cleanRequest(String command){
+		StringBuilder newCommand = new StringBuilder(); 
+				
+		if (command != null){
+			String tokens [] = command.split("[,]");
+			int length = tokens.length;
+			for (String token : tokens){
+				newCommand.append(token.trim().toUpperCase());
+				if (--length > 0){
+					newCommand.append(",");
+				}
+			}
+		}
+		
+		return newCommand.toString();
+	}
+	
+	public void setValidator(Validator<String> commandFormatValidator) {
 		this.commandFormatValidator = commandFormatValidator;
 	}
 
@@ -66,5 +120,13 @@ public class ControlPanelController implements InitializingBean{
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		this.commandQueue =   (List<String>)ctx.getBean("commandQueue");
+	}
+
+	public void setFloors(Integer floors) {
+		this.floors = floors;
+	}
+	
+	public List<String> getCommandQueue() {
+		return commandQueue;
 	}
 }
