@@ -18,7 +18,7 @@ import com.liftsimulation.controller.validator.Validator;
 import com.liftsimulation.model.Lift;
 
 /**
- * Class meant to "hear" requests and assign to correct Lift Engines
+ * Class meant to "listens" requests and assign to correct Lift Engines
  * 
  * @author Jose Aleman
  *

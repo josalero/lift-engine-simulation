@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
 /**
- * Components and Beans configuration
+ * Components and Beans configuration Java Based
  * 
  * @author Jose Aleman
  *

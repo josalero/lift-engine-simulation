@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.Order;
 
 /**
- * Application configuration using Spring Java based
+ * Application configuration using Spring  Configuration Java based
  * 
  * @author Jose Aleman
  *

@@ -19,7 +19,7 @@ import com.liftsimulation.listener.LiftListener;
 
 /**
  * 
- * Lift Engine Model
+ * Lift Engine Java Bean
  * 
  * @author Jose Aleman
  * 

@@ -3,7 +3,9 @@
  */
 package com.liftsimulation;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.commons.lang.StringUtils;
@@ -18,7 +20,7 @@ import com.liftsimulation.model.Lift;
 import com.liftsimulation.thread.LiftWorker;
 
 /**
- * Main Class
+ * Lift Engine Simulation Main Class
  * 
  * @author Jose Aleman
  *
@@ -47,12 +49,16 @@ public class LiftEngineSimulation {
 	    
 		Lift lifts[] = new Lift[numberOfLifts+1];
 		
+		Map<Runnable, Thread> liftThreadMap = new HashMap<Runnable, Thread> ();
+		
 		for (int index=1; index < lifts.length; index++){
 			lifts[index] = (Lift) ctx.getBean("lift");
 			lifts[index].setId(index);
 			lifts[index].setFloors(floors);
 			liftListener.addLiftToListener(lifts[index]);
-			Thread thread = new Thread(new LiftWorker(lifts[index]));
+			LiftWorker worker = new LiftWorker(lifts[index]);
+			Thread thread = new Thread(worker);
+			liftThreadMap.put(worker, thread);
 			thread.start();
 		}
 		
@@ -68,16 +74,18 @@ public class LiftEngineSimulation {
 		    
 		    
 		}while(shouldContinue);
-		
+		//Stop threads of execution
+		for (Runnable lift : liftThreadMap.keySet()){
+			Thread thread = liftThreadMap.get(lift);
+			((LiftWorker)lift).goToRest();
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				//
+			}
+		}
+		//Gracefully program termination 
 		System.exit(0);
-		/*controller.handleRequest("OUT,UP,5");
-		controller.handleRequest("IN,1,10");
-		controller.handleRequest("IN,1,5");
-		controller.handleRequest("OUT,UP,7");
-		controller.handleRequest("IN,2,2");*/
-		
-
-
 	}
 
 }

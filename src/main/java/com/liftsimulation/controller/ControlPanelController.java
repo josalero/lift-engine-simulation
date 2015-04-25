@@ -14,7 +14,11 @@ import com.liftsimulation.controller.validator.Validator;
 import com.liftsimulation.exception.ValidationException;
 
 /**
- * Control Panel that adds requests to a queue.
+ * Control Panel for all Lifts
+ * <ul>
+ * <li>Add User Requests to queue</li>
+ * <li>Validate User Requests before adding to queue</li>
+ * </ul>
  * 
  * 
  * @author Jose Aleman
